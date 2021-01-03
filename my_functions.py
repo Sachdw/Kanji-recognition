@@ -40,7 +40,7 @@ def process_images(files,img_size):
     return image_list
 
 
-#Fuctions to easily view the total number of characters classes with less than
+#Functions to easily view the total number of characters classes with less than
 #or greater than a given number of observations
 
 def total_less_than(number,df):

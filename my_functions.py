@@ -30,7 +30,13 @@ def process_images(files,img_size):
     """ 
     for i in range(0,len(files)):
         img_data = plt.imread(files[i])
-        #img_data = color.rgb2gray(img_data)
+        img_data = color.rgb2gray(img_data)
+        
+        #Find the critical value
+        thresh_otsu = threshold_otsu(img_data)
+        #Apply thresholding
+        sample_char = img_data <= thresh_otsu 
+        
         img_data = resize(img_data,(img_size,img_size))
         image_list.append(img_data)
         

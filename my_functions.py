@@ -1,11 +1,16 @@
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import multiprocessing as mp
 
+
+from tqdm import tqdm
 from matplotlib.patches import Rectangle
+from skimage.filters import threshold_otsu
 from skimage import color
 from skimage.transform import resize
+from keras.preprocessing.image import ImageDataGenerator
+
 
 
 #Function to easily view images
@@ -18,32 +23,97 @@ def show_image(image,title='Image',cmap_type='gray'):
     plt.title(title)
     plt.axis('off')
     plt.show()
+        
     
+def generate_data(file, view="no", n = 9):
+    """Takes an Image file path as an input and augments the image
+    randomly to create n samples (default is 9). The user can specify if they wish to view the
+    samples by specifiying "view = yes", and set the amount of samples to generate 
+    by setting "n = number of samples".
+    """
+    new_images = []
+    
+    # load the image to be augmented
+    img_data = plt.imread(file)
+
+    # expand dimension to one sample
+    samples = np.expand_dims(img_data, 0)
+    
+    # create image data augmentation generator
+    datagen = ImageDataGenerator(zoom_range=[0.7,1.0],brightness_range=[0.4,1.0],
+                                 rotation_range=[-10,10],height_shift_range=0.1,width_shift_range=[-10,10])
+    
+    # prepare iterator
+    iterator = datagen.flow(samples, batch_size=1)
+    
+    # generate samples and plot
+    for i in range(n):
+        
+        #generate batch of images
+        batch = iterator.next()
+        # convert to unsigned integers for viewing
+        new_image = batch[0].astype('uint8')
+        #Add numpy array to list of augmented images
+        new_images.append(new_image)
+        
+        #Create a plot of the augmented images if a user specifies
+        if(view == 'yes'):
+            #define subplot
+            plt.subplot(330 + 1 + i)
+            #plot raw pixel data
+            plt.imshow(new_image)
+
+    # show the figure if user specifies
+    if(view == "yes"):
+        plt.show()
+    
+    #Return list of arrays
+    return new_images
+
+ 
 
 #Function which loads images, converts them to grayscale and resizes them into an x by x image
-def process_images(files,img_size):
-    image_list = []
-    """Takes a list of file paths leading to images and an integer as inputs, and converts
+def process_images(file):
+    """Takes a file path leading to an image or a numpy array as an input, and converts
     the images into grayscale and resizes all the images to a standard square size.
     
-    Returns a numpy array consisting of x by x arrays which represent each of the images.
+    Returns a numpy array consisting of 65 by 65 arrays which represent each of the images.
     """ 
-    for i in range(0,len(files)):
-        img_data = plt.imread(files[i])
-        img_data = color.rgb2gray(img_data)
-        
-        #Find the critical value
-        thresh_otsu = threshold_otsu(img_data)
-        #Apply thresholding
-        sample_char = img_data <= thresh_otsu 
-        
-        img_data = resize(img_data,(img_size,img_size))
-        image_list.append(img_data)
-        
-    #Converts the list into a numpy array so it can be used for neural networks
-    image_list = np.array(image_list)
     
-    return image_list
+    img_data = file
+    
+    #If the input is a file path
+    if(type(file) != np.ndarray):
+        #Read image file
+        img_data = plt.imread(file)
+        
+    #Resize image
+    img_data = resize(img_data,(65,65))
+    #Convert it to grayscale
+    img_data = color.rgb2gray(img_data)
+    #Find the critical value for threshoulding
+    thresh_otsu = threshold_otsu(img_data)
+    #Apply thresholding
+    img_data = img_data <= thresh_otsu 
+
+    return img_data
+ 
+    
+
+#Function to parallelize image processing
+def parallelize_process(img_list):
+    """Takes a list of file paths leading to images as an input and uses parallel processing to 
+    process each of the images. Returns a list of numpy arrays representing the processed images.
+    """
+    cores = mp.cpu_count()
+    pool = mp.Pool(cores)
+    print(f"Starting the image processing with {cores} processing units.")
+    results = pool.map(process_images,tqdm(img_list))
+    print("Closing the pool...")
+    pool.close()
+    print("Joining the pool...")
+    pool.join()
+    return results
 
 
 #Functions to easily view the total number of characters classes with less than
@@ -81,7 +151,8 @@ def total_equal_to(number,df):
     """
     number = int(number)
     amount = df['Count'] == number
-    print(f"\nNumber of characters with {number} observations: "+str(df[amount].shape[0]))
+    num_of_classes = df[amount].shape[0]
+    print(f"\nNumber of characters with {number} observations: {num_of_classes}"
     print("This makes up: "+str(round(df[amount].shape[0]/df.shape[0],3)*100)+"% of the classes")
 
 

@@ -152,11 +152,10 @@ def total_equal_to(number,df):
     number = int(number)
     amount = df['Count'] == number
     num_of_classes = df[amount].shape[0]
-    print(f"\nNumber of characters with {number} observations: {num_of_classes}"
-    print("This makes up: "+str(round(df[amount].shape[0]/df.shape[0],3)*100)+"% of the classes")
-
-
-
+    print(f"\nNumber of characters with {number} observations: {num_of_classes}")
+    print("This makes up: "+str(round(df[amount].shape[0]/df.shape[0],4)*100)+"% of the classes")
+    
+    
 #Function that uses coordinate information in the csv files associated with each book
 #to draw boxes around all of the characters on a given page.
 #It takes an image, the stem of the image file, and the coordinate information as inputs.

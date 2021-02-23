@@ -9,7 +9,3 @@ Once you have downloaded the dataset, unzip it and place the folder labelled as 
 To open the project, you can do so by typing 'jupyter notebook' in the terminal, and navigating to the file through the Jupyter notebook GUI. You may need to install some extra python packages.
 
 For the models, you can skip the actual model training and load the previously trained models. I have included commenting in the cells indicating if you can skip them.
-
-In the 'presentation' folder you will find a 15 minute video presentation describing the data, methodology, and results of the project.
-
-
